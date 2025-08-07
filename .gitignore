@@ -1,0 +1,13 @@
+*.pyc
+CMakeSettings.json
+CMakeUserPresets.json
+
+.vs/
+.kdev4/
+*.kate-swp
+*.kdev4
+*.swp
+
+out/
+build/
+.cache/
