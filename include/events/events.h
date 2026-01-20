@@ -53,6 +53,7 @@ class Callback : public CallbackBase
 	template<typename ...T> friend class Event;
 
 public:
+	virtual ~Callback() = default;
 	virtual void operator()(T... args) = 0;
 
 protected:
@@ -129,7 +130,7 @@ public:
 	}
 
 	// Call the event
-	void operator()(T... args)
+	void operator()(T... args) const
 	{
 		for (auto it = this->callbacks.begin(); it != this->callbacks.end();)
 		{
@@ -146,18 +147,18 @@ public:
 
 	// Bind a function to this event
 	[[nodiscard]]
-	std::shared_ptr<Cb> operator+=(void(cb)(T...))
+	std::shared_ptr<Cb> bind(void(cb)(T...))
 	{
-		auto ptr = std::make_shared<Cb>(cb);
-		this->callbacks.push_back(std::weak_ptr<Cb>(ptr));
-		return ptr;
+		return *this += cb;
 	}
 
 	// Bind a function to this event
 	[[nodiscard]]
-	std::shared_ptr<Cb> bind(void(cb)(T...))
+	std::shared_ptr<Cb> operator+=(std::function<void(T...)> cb)
 	{
-		return *this += cb;
+		auto ptr = std::make_shared<Cb>(cb);
+		this->callbacks.push_back(std::weak_ptr<Cb>(ptr));
+		return ptr;
 	}
 
 	// Unbind a free callback function from this event by the function address
@@ -212,7 +213,7 @@ public:
 	}
 
 private:
-	std::vector<std::weak_ptr<Callback<T...>>> callbacks;
+	mutable std::vector<std::weak_ptr<Callback<T...>>> callbacks;
 };
 
 #endif

@@ -118,3 +118,20 @@ TEST_CASE("Unbinding lambda callbacks", "[lambda]")
 	REQUIRE(std::get<0>(watcher1->data) == 0);
 	REQUIRE(std::get<0>(watcher2->data) == 42 + 42);
 }
+
+TEST_CASE("Explicit std function event", "[lambda]")
+{
+	setupWatchers();
+
+	Event<int> event1;
+
+	std::function<void(int)> func = [](int data) {
+		(*watcher1)(data);
+	};
+
+	scoped_event event1 += func;
+
+	event1(42);
+
+	REQUIRE(std::get<0>(watcher1->data) == 42);
+}
