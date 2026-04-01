@@ -14,7 +14,13 @@
 
 // Define event callback binding container in client class - used for proper callback destruction
 // Use at the top of client class. Best if it's private.
-#define event_binding_container template<typename ...T> friend class Event; EventBindingContainer eventBindingContainer;
+#define event_binding_container \
+	template<typename ...T> friend class Event; \
+	template<typename C, typename ...T> friend class ScopedCallback; \
+	template<typename C, typename ...T> friend class MemberCallback; \
+	EventBindingContainer eventBindingContainer;
+
+#define event_bind(CLS, FNC) EventBinding(CLS, FNC)
 
 // The very base event callback, used for proper memory management
 class CallbackBase
@@ -118,6 +124,63 @@ private:
 	C& cls;
 };
 
+// Event callback functor for free, but scope-bound callbacks
+template<typename C, typename ...T>
+class ScopedCallback : public Callback<T...>
+{
+	template<typename ...T> friend class Event;
+
+public:
+	template<typename ...T>
+	ScopedCallback(C& c, const std::function<void(T...)>& cb)
+		: callback(cb)
+		, cls(c)
+	{
+	}
+
+	template<typename ...T>
+	ScopedCallback(C& c, void(func)(T...))
+		: callback(func)
+		, cls(c)
+	{
+	}
+
+	virtual void operator()(T... args) override
+	{
+		this->callback(args...);
+	}
+
+protected:
+	virtual void unregister(std::shared_ptr<Callback<T...>>& cb)
+	{
+		this->cls.eventBindingContainer.unregisterCallback(cb);
+	}
+
+private:
+	std::function<void(T...)> callback;
+	C& cls;
+};
+
+template<typename C, typename ...T>
+struct EventBinding
+{
+	using Mcb = MemberCallback<C, T...>;
+	std::shared_ptr<Mcb> ptr;
+	C& c;
+
+	EventBinding(C& c, void(C::* cb)(T...))
+		: ptr(std::make_shared<Mcb>(c, cb))
+		, c(c)
+	{
+	}
+
+	EventBinding(C& c, std::function<void(T...)> cb)
+		: ptr(std::make_shared<Mcb>(c, cb))
+		, c(c)
+	{
+	}
+};
+
 template<typename ...T>
 class Event
 {
@@ -161,6 +224,14 @@ public:
 		return ptr;
 	}
 
+	template<typename C>
+	void operator+=(EventBinding<C, T...>&& binding)
+	{
+		using Mcb = MemberCallback<C, T...>;
+		this->callbacks.push_back(std::weak_ptr<Mcb>(binding.ptr));
+		binding.c.eventBindingContainer.registerCallback(binding.ptr);
+	}
+
 	// Unbind a free callback function from this event by the function address
 	void operator-=(void(cb)(T...))
 	{
@@ -189,6 +260,16 @@ public:
 	void bind(C& c, void(C::* cb)(T...))
 	{
 		using Mcb = MemberCallback<C, T...>;
+		auto ptr = std::make_shared<Mcb>(c, cb);
+		this->callbacks.push_back(std::weak_ptr<Mcb>(ptr));
+		c.eventBindingContainer.registerCallback(ptr);
+	}
+
+	// Bind lambda function to this event, with lifetime bound to given class
+	template<typename C>
+	void bind(C& c, std::function<void(T...)> cb)
+	{
+		using Mcb = ScopedCallback<C, T...>;
 		auto ptr = std::make_shared<Mcb>(c, cb);
 		this->callbacks.push_back(std::weak_ptr<Mcb>(ptr));
 		c.eventBindingContainer.registerCallback(ptr);
