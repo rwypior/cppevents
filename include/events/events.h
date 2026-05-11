@@ -184,6 +184,107 @@ struct EventBinding
 template<typename ...T>
 class Event
 {
+private:
+	// Wrapper for registerd callbacks
+	struct EventCallbackStorage
+	{
+		/// Run the callback and return true to keep it, and false to remove it
+		virtual bool run(T... args) const = 0;
+		/// Unregister the callback
+		virtual void unregister() = 0;
+		/// Get callback underlying pointer
+		virtual std::shared_ptr<Callback<T...>> get() = 0;
+		/// Get callback underlying pointer - const
+		virtual const std::shared_ptr<Callback<T...>> get() const = 0;
+	};
+
+	// Wrapper for all regular callbacks
+	struct StandardEventCallbackStorage : EventCallbackStorage
+	{
+		StandardEventCallbackStorage(std::weak_ptr<Callback<T...>>&& callback)
+			: callback(std::move(callback))
+		{
+		}
+
+		virtual bool run(T... args) const override
+		{
+			if (auto ptr = this->callback.lock())
+			{
+				(*ptr)(args...);
+				return true;
+			}
+
+			return false;
+		}
+
+		virtual void unregister() override
+		{
+			// If the callback is good, then the class object still lives
+			if (auto ptr = this->callback.lock())
+				ptr->unregister(ptr);
+		}
+
+		virtual std::shared_ptr<Callback<T...>> get() override
+		{
+			return this->callback.lock();
+		}
+		
+		virtual const std::shared_ptr<Callback<T...>> get() const override
+		{
+			return this->callback.lock();
+		}
+
+		std::weak_ptr<Callback<T...>> callback;
+	};
+
+	// Wrapper for one-time callbacks which are deleted after the first call
+	struct OneTimeEventCallbackStorage : EventCallbackStorage
+	{
+		OneTimeEventCallbackStorage(std::shared_ptr<Callback<T...>>&& callback)
+			: callback(std::move(callback))
+		{
+		}
+
+		virtual bool run(T... args) const override
+		{
+			(*this->callback)(args...);
+			return false;
+		}
+
+		virtual void unregister() override
+		{
+			this->callback->unregister(this->callback);
+		}
+
+		virtual std::shared_ptr<Callback<T...>> get() override
+		{
+			return this->callback;
+		}
+		
+		virtual const std::shared_ptr<Callback<T...>> get() const override
+		{
+			return this->callback;
+		}
+
+		std::shared_ptr<Callback<T...>> callback;
+	};
+
+	// Wrapper for member one-time callbacks which are deleted after the first call
+	struct OneTimeMemberEventCallbackStorage : StandardEventCallbackStorage
+	{
+		using StandardEventCallbackStorage::StandardEventCallbackStorage;
+
+		virtual bool run(T... args) const override
+		{
+			if (auto ptr = this->callback.lock())
+			{
+				(*ptr)(args...);
+			}
+
+			return false;
+		}
+	};
+
 public:
 	using Cb = FreeCallback<T...>;
 
@@ -198,11 +299,8 @@ public:
 		for (auto it = this->callbacks.begin(); it != this->callbacks.end();)
 		{
 			auto& cb = *it;
-			if (auto ptr = cb.lock())
-			{
-				(*ptr)(args...);
+			if (cb->run(args...))
 				it++;
-			}
 			else
 				it = this->callbacks.erase(it);
 		}
@@ -215,20 +313,38 @@ public:
 		return *this += cb;
 	}
 
+	// Bind a one-time free function to this event
+	std::shared_ptr<Cb> once(std::function<void(T...)> cb)
+	{
+		auto ptr = std::make_shared<Cb>(cb);
+		this->callbacks.push_back(std::make_unique<OneTimeEventCallbackStorage>(ptr));
+		return ptr;
+	}
+
+	// Bind a one-time member function to this event
+	template<typename C>
+	void once(EventBinding<C, T...>&& binding)
+	{
+		using Mcb = MemberCallback<C, T...>;
+		this->callbacks.push_back(std::make_unique<OneTimeMemberEventCallbackStorage>(std::weak_ptr<Mcb>(binding.ptr)));
+		binding.c.eventBindingContainer.registerCallback(binding.ptr);
+	}
+
 	// Bind a function to this event
 	[[nodiscard]]
 	std::shared_ptr<Cb> operator+=(std::function<void(T...)> cb)
 	{
 		auto ptr = std::make_shared<Cb>(cb);
-		this->callbacks.push_back(std::weak_ptr<Cb>(ptr));
+		this->callbacks.push_back(std::make_unique<StandardEventCallbackStorage>(std::weak_ptr<Cb>(ptr)));
 		return ptr;
 	}
 
+	// Bind a member-function to this event
 	template<typename C>
 	void operator+=(EventBinding<C, T...>&& binding)
 	{
 		using Mcb = MemberCallback<C, T...>;
-		this->callbacks.push_back(std::weak_ptr<Mcb>(binding.ptr));
+		this->callbacks.push_back(std::make_unique<StandardEventCallbackStorage>(std::weak_ptr<Mcb>(binding.ptr)));
 		binding.c.eventBindingContainer.registerCallback(binding.ptr);
 	}
 
@@ -237,7 +353,7 @@ public:
 	{
 		typedef void(cbtype)(T...);
 		auto it = std::find_if(this->callbacks.begin(), this->callbacks.end(), [cb](const auto& a) {
-			if (auto f = std::dynamic_pointer_cast<FreeCallback<T...>>(a.lock()))
+			if (auto f = std::dynamic_pointer_cast<FreeCallback<T...>>(a->get()))
 				return *f->callback.target<cbtype*>() == cb;
 			return false;
 		});
@@ -249,7 +365,7 @@ public:
 	void operator-=(const std::shared_ptr<Callback<T...>> &cb)
 	{
 		auto it = std::find_if(this->callbacks.begin(), this->callbacks.end(), [cb](const auto &a) {
-			return cb == a.lock();
+			return cb == a->get();
 		});
 		if (it != this->callbacks.end())
 			this->callbacks.erase(it);
@@ -261,7 +377,7 @@ public:
 	{
 		using Mcb = MemberCallback<C, T...>;
 		auto ptr = std::make_shared<Mcb>(c, cb);
-		this->callbacks.push_back(std::weak_ptr<Mcb>(ptr));
+		this->callbacks.push_back(std::make_unique<StandardEventCallbackStorage>(std::weak_ptr<Mcb>(ptr)));
 		c.eventBindingContainer.registerCallback(ptr);
 	}
 
@@ -271,18 +387,16 @@ public:
 	{
 		using Mcb = ScopedCallback<C, T...>;
 		auto ptr = std::make_shared<Mcb>(c, cb);
-		this->callbacks.push_back(std::weak_ptr<Mcb>(ptr));
+		this->callbacks.push_back(std::make_unique<StandardEventCallbackStorage>(std::weak_ptr<Mcb>(ptr)));
 		c.eventBindingContainer.registerCallback(ptr);
 	}
 
 	// Erase all callback references to member callbacks in client classes
 	void unregisterMembers()
 	{
-		for (auto cb : this->callbacks)
+		for (auto& cb : this->callbacks)
 		{
-			// If the callback is good, then the class object still lives
-			if (auto ptr = cb.lock())
-				ptr->unregister(ptr);
+			cb->unregister();
 		}
 	}
 
@@ -293,8 +407,14 @@ public:
 		this->callbacks.clear();
 	}
 
+	// Return count of registerd callbacks
+	size_t count()
+	{
+		return this->callbacks.size();
+	}
+
 private:
-	mutable std::vector<std::weak_ptr<Callback<T...>>> callbacks;
+	mutable std::vector<std::unique_ptr<EventCallbackStorage>> callbacks;
 };
 
 #endif

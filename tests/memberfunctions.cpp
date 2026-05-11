@@ -170,3 +170,26 @@ TEST_CASE("Binding lambda event to class scope", "[member functions]")
 
 	REQUIRE(str.getBoundCount() == 0);
 }
+
+TEST_CASE("One-time member function event with operator", "[member functions]")
+{
+	setupWatchers();
+
+	Event<int> event1;
+
+	SomeStruct str;
+
+	event1.once(event_bind(str, &SomeStruct::function1));
+
+	REQUIRE(event1.count() == 1);
+
+	event1(42);
+
+	REQUIRE(std::get<0>(watcher1->data) == 42);
+	REQUIRE(event1.count() == 0);
+
+	event1(1337);
+
+	REQUIRE(std::get<0>(watcher1->data) == 42);
+	REQUIRE(event1.count() == 0);
+}

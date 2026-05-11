@@ -41,9 +41,25 @@ TEST_CASE("Simple free function event", "[free functions]")
 	Event<int> event1;
 
 	scoped_event event1 += function1;
+	REQUIRE(event1.count() == 1);
 	event1(42);
 	
 	REQUIRE(std::get<0>(watcher1->data) == 42);
+	REQUIRE(event1.count() == 1);
+}
+
+TEST_CASE("Empty event free function event", "[free functions]")
+{
+	setupWatchers();
+	std::get<0>(watcher1->data) = 13;
+
+	Event<int> event1;
+
+	REQUIRE(event1.count() == 0);
+	event1(42);
+	
+	REQUIRE(std::get<0>(watcher1->data) == 13);
+	REQUIRE(event1.count() == 0);
 }
 
 TEST_CASE("Multiple callbacks simple free function event", "[free functions]")
@@ -55,11 +71,14 @@ TEST_CASE("Multiple callbacks simple free function event", "[free functions]")
 	scoped_event event1 += function1;
 	scoped_event event1 += function2;
 	scoped_event event1 += function3;
+	REQUIRE(event1.count() == 3);
+
 	event1(42);
 
 	REQUIRE(std::get<0>(watcher1->data) == 42);
 	REQUIRE(std::get<0>(watcher2->data) == 42 + 42);
 	REQUIRE(std::get<0>(watcher3->data) == 42 + 1337);
+	REQUIRE(event1.count() == 3);
 }
 
 TEST_CASE("Multiple calls free function event", "[free functions]")
@@ -69,14 +88,19 @@ TEST_CASE("Multiple calls free function event", "[free functions]")
 	Event<int> event1;
 
 	scoped_event event1 += function1;
+	REQUIRE(event1.count() == 1);
+
 	event1(42);
 	REQUIRE(std::get<0>(watcher1->data) == 42);
+	REQUIRE(event1.count() == 1);
 
 	event1(48);
 	REQUIRE(std::get<0>(watcher1->data) == 48);
+	REQUIRE(event1.count() == 1);
 
 	event1(1337);
 	REQUIRE(std::get<0>(watcher1->data) == 1337);
+	REQUIRE(event1.count() == 1);
 }
 
 TEST_CASE("Scoped free function event", "[free functions]")
@@ -120,9 +144,6 @@ TEST_CASE("Unbinding free callbacks", "[free functions]")
 
 TEST_CASE("Unbinding free functions", "[free functions]")
 {
-	//std::shared_ptr<Callback<int>> asdasd;
-	//std::shared_ptr<FreeCallback<int>> zxczxc = std::dynamic_pointer_cast<FreeCallback<int>;
-
 	setupWatchers();
 
 	Event<int> event1;
@@ -141,4 +162,25 @@ TEST_CASE("Unbinding free functions", "[free functions]")
 
 	REQUIRE(std::get<0>(watcher1->data) == 0);
 	REQUIRE(std::get<0>(watcher2->data) == 42 + 42);
+}
+
+TEST_CASE("One-time free function event", "[free functions]")
+{
+	setupWatchers();
+
+	Event<int> event1;
+
+	event1.once(function1);
+
+	REQUIRE(event1.count() == 1);
+
+	event1(42); // At this point, the callback is run and is instantly deleted afterwards
+
+	REQUIRE(std::get<0>(watcher1->data) == 42);
+	REQUIRE(event1.count() == 0);
+
+	event1(1337);
+
+	REQUIRE(std::get<0>(watcher1->data) == 42);
+	REQUIRE(event1.count() == 0);
 }
