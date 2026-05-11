@@ -19,7 +19,7 @@ The only class the user has to interact with is the `Event` template class, whic
 an event to which any number of functions can be bound. It can be used with free-functions,
 lambda functions and member functions. Here are some examples.
 
-```
+```C++
 #include <events/events.h>
 
 void myFunction(int arg)
@@ -63,7 +63,7 @@ Reference
 **...T** - list of parameter types which will be passed to the event's callbacks
 
 #### Member functions
-```
+```C++
 void operator()(T... args) const
 ```
 
@@ -71,7 +71,7 @@ Calls all registered event callbacks with given arguments *args*
 
 -----------
 
-```
+```C++
 [[nodiscard]] std::shared_ptr<Cb> bind(void(cb)(T...))
 [[nodiscard]] std::shared_ptr<Cb> operator+=(std::function<void(T...)> cb)
 ```
@@ -82,7 +82,7 @@ callback unregistration.
 
 -----------
 
-```
+```C++
 template<typename C> void bind(C& c, void(C::* cb)(T...))
 template<typename C> void operator+=(EventBinding<C, T...>&& binding)
 ```
@@ -93,7 +93,7 @@ The *event_bind* and *event_binding_container* macros provide automatic callback
 
 -----------
 
-```
+```C++
 std::shared_ptr<Cb> once(std::function<void(T...)> cb)
 ```
 
@@ -101,7 +101,7 @@ Registeres one-time only free-function callback to this event.
 
 -----------
 
-```
+```C++
 template<typename C> void once(EventBinding<C, T...>&& binding)
 ```
 
@@ -109,7 +109,7 @@ Registeres one-time only member-function callback to this event.
 
 -----------
 
-```
+```C++
 void operator-=(void(cb)(T...))
 void operator-=(const std::shared_ptr<Callback<T...>> &cb)
 ```
@@ -118,7 +118,7 @@ Unregisteres previously registered callbacks using callback pointer returned fro
 
 -----------
 
-```
+```C++
 void unregisterMembers()
 ```
 
@@ -126,7 +126,7 @@ Unregisteres all previously registered **member**-function callback functions fr
 
 -----------
 
-```
+```C++
 void clear()
 ```
 
@@ -134,7 +134,7 @@ Unregisteres **all** previously registered callbacks from this event.
 
 -----------
 
-```
+```C++
 size_t count()
 ```
 
@@ -155,7 +155,7 @@ Callback handle may come in handy especially for lambda functions, as it's the o
 unregister a lambda callback. In order to do so, you should capture the callback, and unregister it,
 like so:
 
-```
+```C++
 auto callback = myEvent += [](){ ... }; // Register lambda
 myEvent -= callback; // Unregister lambda
 ```
@@ -171,26 +171,6 @@ so they can be unregistered and destroyed properly after the class is destroyed.
 
 If your class has any member which is an event callback, simply put `event_binding_container` at the top
 of the class and that's it.
-
-Examples
--------------
-
-The following is the simplest example binding a lambda function to an event taking a single *int* parameter
-and calling the event.
-
-```
-	#include <events/events.h>
-
-	// ...
-
-	Event<int> event1;
-	scoped_event event1 += [](int data) {
-		std::cout << data << std::endl;
-	};
-	event1(42);
-
-	// ...
-```
 
 More examples
 -------------
