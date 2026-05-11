@@ -172,6 +172,26 @@ so they can be unregistered and destroyed properly after the class is destroyed.
 If your class has any member which is an event callback, simply put `event_binding_container` at the top
 of the class and that's it.
 
+Examples
+-------------
+
+The following is the simplest example binding a lambda function to an event taking a single *int* parameter
+and calling the event.
+
+```
+	#include <events/events.h>
+
+	// ...
+
+	Event<int> event1;
+	scoped_event event1 += [](int data) {
+		std::cout << data << std::endl;
+	};
+	event1(42);
+
+	// ...
+```
+
 More examples
 -------------
 
