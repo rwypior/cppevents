@@ -53,6 +53,95 @@ int main(int argc, char **argv)
 }
 ```
 
+Reference
+---------
+
+### **Event** class
+#### template<typename ...T> class Event
+
+#### Template arguments
+**...T** - list of parameter types which will be passed to the event's callbacks
+
+#### Member functions
+```
+void operator()(T... args) const
+```
+
+Calls all registered event callbacks with given arguments *args*
+
+-----------
+
+```
+[[nodiscard]] std::shared_ptr<Cb> bind(void(cb)(T...))
+[[nodiscard]] std::shared_ptr<Cb> operator+=(std::function<void(T...)> cb)
+```
+
+Binds a free-function callback to this event. After the function is bound to the event, it will be called once the event is fired.
+The callback can be later unregistered by calling *-=* operator. The *scoped_event* macro (explained later) provides automatic
+callback unregistration.
+
+-----------
+
+```
+template<typename C> void bind(C& c, void(C::* cb)(T...))
+template<typename C> void operator+=(EventBinding<C, T...>&& binding)
+```
+
+Binds a mamber function callback to this event. For more details, refer to functions related to free-function callbacks.
+The *event_bind* and *event_binding_container* macros provide automatic callback unregistration for member-function callbacks
+(explained later).
+
+-----------
+
+```
+std::shared_ptr<Cb> once(std::function<void(T...)> cb)
+```
+
+Registeres one-time only free-function callback to this event.
+
+-----------
+
+```
+template<typename C> void once(EventBinding<C, T...>&& binding)
+```
+
+Registeres one-time only member-function callback to this event.
+
+-----------
+
+```
+void operator-=(void(cb)(T...))
+void operator-=(const std::shared_ptr<Callback<T...>> &cb)
+```
+
+Unregisteres previously registered callbacks using callback pointer returned from previously used binding functions.
+
+-----------
+
+```
+void unregisterMembers()
+```
+
+Unregisteres all previously registered **member**-function callback functions from this event.
+
+-----------
+
+```
+void clear()
+```
+
+Unregisteres **all** previously registered callbacks from this event.
+
+-----------
+
+```
+size_t count()
+```
+
+Returns count of all registered callbacks to this event.
+
+-----------
+
 Important macros
 ----------------
 
