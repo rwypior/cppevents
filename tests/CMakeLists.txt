@@ -10,7 +10,7 @@ project ("eventsTest")
 add_executable(eventsTest)
 set_property(TARGET eventsTest PROPERTY CXX_STANDARD 17)
 
-target_sources(eventsTest PRIVATE "main.cpp" "freefunctiontests.cpp" "common.h" "lambdatest.cpp" "memberfunctions.cpp")
+target_sources(eventsTest PRIVATE "main.cpp" "freefunctiontests.cpp" "common.h" "lambdatest.cpp" "memberfunctions.cpp" "eventmemorytest.cpp")
 
 find_package(Catch2 3.6.0 REQUIRED)
 

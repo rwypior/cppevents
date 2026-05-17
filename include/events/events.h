@@ -188,6 +188,8 @@ private:
 	// Wrapper for registerd callbacks
 	struct EventCallbackStorage
 	{
+		virtual ~EventCallbackStorage() = default;
+
 		/// Run the callback and return true to keep it, and false to remove it
 		virtual bool run(T... args) const = 0;
 		/// Unregister the callback
@@ -196,6 +198,8 @@ private:
 		virtual std::shared_ptr<Callback<T...>> get() = 0;
 		/// Get callback underlying pointer - const
 		virtual const std::shared_ptr<Callback<T...>> get() const = 0;
+		/// Clone
+		virtual std::unique_ptr<EventCallbackStorage> clone() const = 0;
 	};
 
 	// Wrapper for all regular callbacks
@@ -203,6 +207,11 @@ private:
 	{
 		StandardEventCallbackStorage(std::weak_ptr<Callback<T...>>&& callback)
 			: callback(std::move(callback))
+		{
+		}
+		
+		StandardEventCallbackStorage(const StandardEventCallbackStorage& event)
+			: callback(event.callback)
 		{
 		}
 
@@ -234,6 +243,11 @@ private:
 			return this->callback.lock();
 		}
 
+		virtual std::unique_ptr<EventCallbackStorage> clone() const override
+		{
+			return std::make_unique<StandardEventCallbackStorage>(*this);
+		}
+
 		std::weak_ptr<Callback<T...>> callback;
 	};
 
@@ -242,6 +256,11 @@ private:
 	{
 		OneTimeEventCallbackStorage(std::shared_ptr<Callback<T...>>&& callback)
 			: callback(std::move(callback))
+		{
+		}
+		
+		OneTimeEventCallbackStorage(const OneTimeEventCallbackStorage& event)
+			: callback(event.callback)
 		{
 		}
 
@@ -266,6 +285,11 @@ private:
 			return this->callback;
 		}
 
+		virtual std::unique_ptr<EventCallbackStorage> clone() const override
+		{
+			return std::make_unique<OneTimeEventCallbackStorage>(*this);
+		}
+
 		std::shared_ptr<Callback<T...>> callback;
 	};
 
@@ -283,10 +307,31 @@ private:
 
 			return false;
 		}
+
+		virtual std::unique_ptr<EventCallbackStorage> clone() const override
+		{
+			return std::make_unique<OneTimeMemberEventCallbackStorage>(*this);
+		}
 	};
 
 public:
 	using Cb = FreeCallback<T...>;
+
+	Event() = default;
+
+	Event(const Event<T...>& event)
+	{
+		this->callbacks.reserve(event.callbacks.size());
+		for (auto& callback : event.callbacks)
+		{
+			this->callbacks.push_back(callback->clone());
+		}
+	}
+
+	Event(Event<T...>&& event)
+		: callbacks(std::move(event.callbacks))
+	{
+	}
 
 	~Event()
 	{
