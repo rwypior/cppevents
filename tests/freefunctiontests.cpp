@@ -34,7 +34,7 @@ namespace
 	}
 }
 
-TEST_CASE("Simple free function event", "[free functions]")
+TEST_CASE("Free function::Simple event", "[free functions]")
 {
 	setupWatchers();
 
@@ -48,7 +48,7 @@ TEST_CASE("Simple free function event", "[free functions]")
 	REQUIRE(event1.count() == 1);
 }
 
-TEST_CASE("Empty event free function event", "[free functions]")
+TEST_CASE("Free function::Empty event", "[free functions]")
 {
 	setupWatchers();
 	std::get<0>(watcher1->data) = 13;
@@ -62,7 +62,7 @@ TEST_CASE("Empty event free function event", "[free functions]")
 	REQUIRE(event1.count() == 0);
 }
 
-TEST_CASE("Multiple callbacks simple free function event", "[free functions]")
+TEST_CASE("Free function::Simple multiple callbacks", "[free functions]")
 {
 	setupWatchers();
 
@@ -81,7 +81,7 @@ TEST_CASE("Multiple callbacks simple free function event", "[free functions]")
 	REQUIRE(event1.count() == 3);
 }
 
-TEST_CASE("Multiple calls free function event", "[free functions]")
+TEST_CASE("Free function::Multiple calls", "[free functions]")
 {
 	setupWatchers();
 
@@ -103,7 +103,7 @@ TEST_CASE("Multiple calls free function event", "[free functions]")
 	REQUIRE(event1.count() == 1);
 }
 
-TEST_CASE("Scoped free function event", "[free functions]")
+TEST_CASE("Free function::Scoped event", "[free functions]")
 {
 	setupWatchers();
 
@@ -120,7 +120,7 @@ TEST_CASE("Scoped free function event", "[free functions]")
 	REQUIRE(std::get<0>(watcher1->data) == 42);
 }
 
-TEST_CASE("Unbinding free callbacks", "[free functions]")
+TEST_CASE("Free function::Unbinding callbacks", "[free functions]")
 {
 	setupWatchers();
 
@@ -142,7 +142,7 @@ TEST_CASE("Unbinding free callbacks", "[free functions]")
 	REQUIRE(std::get<0>(watcher2->data) == 42 + 42);
 }
 
-TEST_CASE("Unbinding free functions", "[free functions]")
+TEST_CASE("Free function::Unbinding functions", "[free functions]")
 {
 	setupWatchers();
 
@@ -164,7 +164,7 @@ TEST_CASE("Unbinding free functions", "[free functions]")
 	REQUIRE(std::get<0>(watcher2->data) == 42 + 42);
 }
 
-TEST_CASE("One-time free function event", "[free functions]")
+TEST_CASE("Free function::One-time event", "[free functions]")
 {
 	setupWatchers();
 

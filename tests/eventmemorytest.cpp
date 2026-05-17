@@ -34,7 +34,7 @@ namespace {
 	};
 }
 
-TEST_CASE("Free function event copying", "[memory]")
+TEST_CASE("Memory::Free function event copying", "[memory]")
 {
 	Event<int> event1;
 
@@ -45,7 +45,7 @@ TEST_CASE("Free function event copying", "[memory]")
 	REQUIRE(copy1.count() == 2);
 }
 
-TEST_CASE("Member function event copying", "[memory]")
+TEST_CASE("Memory::Member function event copying", "[memory]")
 {
 	SomeStruct something;
 
@@ -58,7 +58,7 @@ TEST_CASE("Member function event copying", "[memory]")
 	REQUIRE(copy1.count() == 2);
 }
 
-TEST_CASE("Lambda event copying", "[memory]")
+TEST_CASE("Memory::Lambda event copying", "[memory]")
 {
 	SomeStruct something;
 
@@ -71,7 +71,7 @@ TEST_CASE("Lambda event copying", "[memory]")
 	REQUIRE(copy1.count() == 2);
 }
 
-TEST_CASE("One-time event copying", "[memory]")
+TEST_CASE("Memory::One-time event copying", "[memory]")
 {
 	SomeStruct something;
 
@@ -84,7 +84,7 @@ TEST_CASE("One-time event copying", "[memory]")
 	REQUIRE(copy1.count() == 2);
 }
 
-TEST_CASE("Event moving", "[memory]")
+TEST_CASE("Memory::Event moving", "[memory]")
 {
 	Event<int> event1;
 

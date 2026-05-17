@@ -46,7 +46,7 @@ namespace
 	};
 }
 
-TEST_CASE("Simple member function event", "[member functions]")
+TEST_CASE("Member function::Simple event", "[member functions]")
 {
 	setupWatchers();
 
@@ -60,7 +60,7 @@ TEST_CASE("Simple member function event", "[member functions]")
 	REQUIRE(std::get<0>(watcher1->data) == 42);
 }
 
-TEST_CASE("Simple member function event with operator", "[member functions]")
+TEST_CASE("Member function::Simple event with operator", "[member functions]")
 {
 	setupWatchers();
 
@@ -74,7 +74,7 @@ TEST_CASE("Simple member function event with operator", "[member functions]")
 	REQUIRE(std::get<0>(watcher1->data) == 42);
 }
 
-TEST_CASE("Multiple callbacks simple member function event", "[member functions]")
+TEST_CASE("Member function::Multiple callbacks simple event", "[member functions]")
 {
 	setupWatchers();
 
@@ -92,7 +92,7 @@ TEST_CASE("Multiple callbacks simple member function event", "[member functions]
 	REQUIRE(std::get<0>(watcher3->data) == 42 + 1337);
 }
 
-TEST_CASE("Multiple calls member function event", "[member functions]")
+TEST_CASE("Member function::Multiple calls event", "[member functions]")
 {
 	setupWatchers();
 
@@ -111,7 +111,7 @@ TEST_CASE("Multiple calls member function event", "[member functions]")
 	REQUIRE(std::get<0>(watcher1->data) == 1337);
 }
 
-TEST_CASE("Scoped member function event", "[member functions]")
+TEST_CASE("Member function::Scoped event", "[member functions]")
 {
 	setupWatchers();
 
@@ -129,7 +129,7 @@ TEST_CASE("Scoped member function event", "[member functions]")
 	REQUIRE(std::get<0>(watcher1->data) == 42);
 }
 
-TEST_CASE("Cleanup after destruction", "[member functions]")
+TEST_CASE("Member function::Cleanup after destruction", "[member functions]")
 {
 	setupWatchers();
 
@@ -149,7 +149,7 @@ TEST_CASE("Cleanup after destruction", "[member functions]")
 	REQUIRE(str.getBoundCount() == 0);
 }
 
-TEST_CASE("Binding lambda event to class scope", "[member functions]")
+TEST_CASE("Member function::Binding lambda event to class scope", "[member functions]")
 {
 	setupWatchers();
 
@@ -171,7 +171,7 @@ TEST_CASE("Binding lambda event to class scope", "[member functions]")
 	REQUIRE(str.getBoundCount() == 0);
 }
 
-TEST_CASE("One-time member function event with operator", "[member functions]")
+TEST_CASE("Member function::One-time member function event with operator", "[member functions]")
 {
 	setupWatchers();
 

@@ -19,7 +19,7 @@ namespace
 	}
 }
 
-TEST_CASE("Simple lambda event", "[lambda]")
+TEST_CASE("Lambda::Simple event", "[lambda]")
 {
 	setupWatchers();
 
@@ -33,7 +33,7 @@ TEST_CASE("Simple lambda event", "[lambda]")
 	REQUIRE(std::get<0>(watcher1->data) == 42);
 }
 
-TEST_CASE("Multiple callbacks lambda event", "[lambda]")
+TEST_CASE("Lambda::Multiple callbacks", "[lambda]")
 {
 	setupWatchers();
 
@@ -55,7 +55,7 @@ TEST_CASE("Multiple callbacks lambda event", "[lambda]")
 	REQUIRE(std::get<0>(watcher3->data) == 42 + 1337);
 }
 
-TEST_CASE("Multiple calls lambda event", "[lambda]")
+TEST_CASE("Lambda::Multiple calls", "[lambda]")
 {
 	setupWatchers();
 
@@ -74,7 +74,7 @@ TEST_CASE("Multiple calls lambda event", "[lambda]")
 	REQUIRE(std::get<0>(watcher1->data) == 1337);
 }
 
-TEST_CASE("Scoped lambda event", "[lambda]")
+TEST_CASE("Lambda::Scoped event", "[lambda]")
 {
 	setupWatchers();
 
@@ -93,7 +93,7 @@ TEST_CASE("Scoped lambda event", "[lambda]")
 	REQUIRE(std::get<0>(watcher1->data) == 42);
 }
 
-TEST_CASE("Unbinding lambda callbacks", "[lambda]")
+TEST_CASE("Lambda::Unbinding callbacks", "[lambda]")
 {
 	setupWatchers();
 
@@ -119,7 +119,7 @@ TEST_CASE("Unbinding lambda callbacks", "[lambda]")
 	REQUIRE(std::get<0>(watcher2->data) == 42 + 42);
 }
 
-TEST_CASE("Explicit std function event", "[lambda]")
+TEST_CASE("Lambda::Explicit std function", "[lambda]")
 {
 	setupWatchers();
 
