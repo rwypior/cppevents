@@ -19,7 +19,7 @@ The only class the user has to interact with is the `Event` template class, whic
 an event to which any number of functions can be bound. It can be used with free-functions,
 lambda functions and member functions. Here are some examples.
 
-```
+```C++
 #include <events/events.h>
 
 void myFunction(int arg)
@@ -53,6 +53,95 @@ int main(int argc, char **argv)
 }
 ```
 
+Reference
+---------
+
+### **Event** class
+#### template<typename ...T> class Event
+
+#### Template arguments
+**...T** - list of parameter types which will be passed to the event's callbacks
+
+#### Member functions
+```C++
+void operator()(T... args) const
+```
+
+Calls all registered event callbacks with given arguments *args*
+
+-----------
+
+```C++
+[[nodiscard]] std::shared_ptr<Cb> bind(void(cb)(T...))
+[[nodiscard]] std::shared_ptr<Cb> operator+=(std::function<void(T...)> cb)
+```
+
+Binds a free-function callback to this event. After the function is bound to the event, it will be called once the event is fired.
+The callback can be later unregistered by calling *-=* operator. The *scoped_event* macro (explained later) provides automatic
+callback unregistration.
+
+-----------
+
+```C++
+template<typename C> void bind(C& c, void(C::* cb)(T...))
+template<typename C> void operator+=(EventBinding<C, T...>&& binding)
+```
+
+Binds a mamber function callback to this event. For more details, refer to functions related to free-function callbacks.
+The *event_bind* and *event_binding_container* macros provide automatic callback unregistration for member-function callbacks
+(explained later).
+
+-----------
+
+```C++
+std::shared_ptr<Cb> once(std::function<void(T...)> cb)
+```
+
+Registeres one-time only free-function callback to this event.
+
+-----------
+
+```C++
+template<typename C> void once(EventBinding<C, T...>&& binding)
+```
+
+Registeres one-time only member-function callback to this event.
+
+-----------
+
+```C++
+void operator-=(void(cb)(T...))
+void operator-=(const std::shared_ptr<Callback<T...>> &cb)
+```
+
+Unregisteres previously registered callbacks using callback pointer returned from previously used binding functions.
+
+-----------
+
+```C++
+void unregisterMembers()
+```
+
+Unregisteres all previously registered **member**-function callback functions from this event.
+
+-----------
+
+```C++
+void clear()
+```
+
+Unregisteres **all** previously registered callbacks from this event.
+
+-----------
+
+```C++
+size_t count()
+```
+
+Returns count of all registered callbacks to this event.
+
+-----------
+
 Important macros
 ----------------
 
@@ -66,7 +155,7 @@ Callback handle may come in handy especially for lambda functions, as it's the o
 unregister a lambda callback. In order to do so, you should capture the callback, and unregister it,
 like so:
 
-```
+```C++
 auto callback = myEvent += [](){ ... }; // Register lambda
 myEvent -= callback; // Unregister lambda
 ```
